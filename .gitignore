@@ -1,0 +1,7 @@
+venv
+docs/build
+*.egg-info
+*.p12
+*.cert
+*.secret
+
