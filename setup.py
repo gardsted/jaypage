@@ -6,7 +6,7 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 name = "jaypage"
 long_description = open(os.path.join(rootdir, 'README.md')).read().strip()
 VERSION = open(os.path.join(rootdir, 'VERSION')).read().strip()
-setup(name='jay' + name,
+setup(name=name,
       version=VERSION,
       description='jaypage',
       long_description=long_description,
@@ -24,5 +24,10 @@ setup(name='jay' + name,
           'Programming Language :: Python :: 3.6',
       ],
       keywords='mail',
-      packages=["jaypage"]
+      packages=["jaypage"],
+      install_requires=[
+          "aiohttp",
+          "lxml",
+          "cssselect",
+      ]
 )

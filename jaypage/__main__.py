@@ -1,7 +1,7 @@
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("jaypage")
+logger = logging.getLogger("getpage")
 [
     logging.getLogger(i).setLevel(logging.WARNING) 
     for i in logging.root.manager.loggerDict.keys()
