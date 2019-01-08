@@ -7,10 +7,19 @@ import collections
 import datetime
 import asyncio
 import chardet
+import uuid
 
 logger = logging.getLogger("page")
 
 class Page():
+    linkfields = {
+        "target":[""],
+        "text":[""],
+        "title":[""],
+        "date":[""],
+        "author":[""],
+        "img":[""],
+    }
 
     def __init__(self, url, dom, **fields):
         self.dom = dom
@@ -29,14 +38,7 @@ class Page():
             "source_weight" : 1,
         }
         self.fields.update(fields)
-        self.linkfields = {
-            "target":[""],
-            "text":[""],
-            "title":[""],
-            "date":[""],
-            "author":[""],
-            "img":[""],
-        }
+        self.linkfields = copy.copy(self.__class__.linkfields)
 
     @classmethod
     async def fromaiohttpresponse(cls, response, target_id=None):
@@ -165,6 +167,19 @@ class Page():
         extra_source_id = self.fields.get("target_id")
         if extra_source_id and not extra_source_id in id_source:
             id_source.append(extra_source_id)
+
+        self._head = {}
+
+        for i in self.dom.cssselect("meta"):
+            a = i.attrib
+            if "content" in a:
+                if "property" in a and ":" in a["property"]:
+                    name = ".".join(a["property"].split(":"))
+                    self._head.setdefault(name,[]).append(a["content"])
+                if "name" in a and ":" in a["name"]:
+                    name = ".".join(a["name"].split(":"))
+                    self._head.setdefault(name,[]).append(a["content"])
+
         return {
             "id": self.id,
             "id.source.date": self.id,
@@ -180,7 +195,9 @@ class Page():
     def getpageitem(self):
         if self._pageitem == None:
             self.setpageitem(self.extractpageitem())
-        return self._pageitem
+        retval = dict(self._pageitem)
+        retval.update(self._head)
+        return retval
 
     def setpageitem(self, pageitem):
         self._pageitem = pageitem
@@ -193,6 +210,7 @@ class Page():
     """
 
     def extractlinkitems(self):
+        self.pageitem
         dom = copy.deepcopy(self.dom)
         items = []
         Page.prune(
@@ -208,15 +226,9 @@ class Page():
                 elif _type == "xpath":
                     branches = Page.extract(dom, keep_xpath=[_pattern])
                 for branch in branches:
-                    item = copy.copy(self.pageitem)
+                    item = copy.copy(self._pageitem)
                     [item.pop(x,None) for x in ["text", "structure"]]
-                    item.update({
-                        "target":[""],
-                        "text":[""],
-                        "title":[""],
-                        "author":[""],
-                        "author":[""],
-                    })
+                    item.update(self.linkfields)
                     for field, pattern in fields.items():
                         _type, _pattern = pattern.split(":")
                         parts = _pattern.split("\\")
