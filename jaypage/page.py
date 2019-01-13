@@ -36,9 +36,10 @@ class Page():
         self._id = self.fields.get("linkitem",{}).get("id.target",None)
 
     @classmethod
-    async def async_fromresponse(cls, response):
+    async def async_fromresponse(cls, response, linkitem={}):
         try:
             fields = cls.get_fields_by_response(response)
+            fields["linkitem"] = linkitem
             content = await response.text()
             dom = fromstring(content, base_url = str(response.url))
             dom.make_links_absolute()
@@ -48,9 +49,10 @@ class Page():
             return None
 
     @classmethod
-    def fromresponse(cls, response):
+    def fromresponse(cls, response, linkitem={}):
         try:
             fields = cls.get_fields_by_response(response)
+            fields["linkitem"] = linkitem
             content = response.text
             dom = fromstring(content)
             dom.make_links_absolute(response.url)
@@ -96,13 +98,6 @@ class Page():
     @classmethod
     def signature(cls, thing):
         return hashlib.sha1(repr(thing).encode("utf-8")).hexdigest()
-
-    def fall(self):
-        structure=[]
-        for element in self.dom.body.iter():
-            if isinstance(element.tag, str) and not element.tag in ["script", "style"]:
-                structure.append(element.tag)
-        return " ".join(structure)
 
     """ Text property,
         If You get it before setting it, it will be extracted from dom

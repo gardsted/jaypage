@@ -32,10 +32,6 @@ class YcomResponse:
 class Tests(unittest.TestCase):
     maxDiff = None
 
-    def test_page_fall(self):
-        p = Page.fromresponse(YcomResponse())
-        self.assertEqual(p.fall(), 'body tr a span span')
-
     def test_page_init(self):
         p = Page(url="http://example.com", dom=None)
         self.assertEqual(p.fields, {
