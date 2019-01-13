@@ -1,5 +1,5 @@
 from lxml.html import fromstring, tostring
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 import logging
 import hashlib
 import copy
@@ -14,8 +14,8 @@ logger = logging.getLogger("page")
 class Page():
     def __init__(self, url, dom, **fields):
         """ fields are rules for extraction
-        but also 
-        linkitem - transferring to page what was registered about the link
+        but also :
+        * linkitem - transferring to page what was registered about the link
         """
         self.dom = dom
         self._text = None
@@ -35,6 +35,20 @@ class Page():
         self.fields.update(fields)
         self._id = self.fields.get("linkitem",{}).get("id.target",None)
 
+
+    @classmethod
+    def fromresponse(cls, response, linkitem={}):
+        try:
+            fields = cls.get_fields_by_response(response)
+            fields["linkitem"] = linkitem
+            content = response.text
+            dom = fromstring(content)
+            dom.make_links_absolute(response.url)
+            return cls(response.url, dom, **fields)
+        except Exception as e:
+            #logger.exception(e)
+            return None
+
     @classmethod
     async def async_fromresponse(cls, response, linkitem={}):
         try:
@@ -49,14 +63,40 @@ class Page():
             return None
 
     @classmethod
-    def fromresponse(cls, response, linkitem={}):
+    def get(cls, *args, **kwargs):
+        return requests.get(*args, **kwargs)
+
+    @classmethod
+    async def async_get(cls, session, *args, **kwargs):
+        return session.get(*args, **kwargs)
+
+    @classmethod
+    def linktarget(cls, linkitem):
+        return urlunparse([
+            linkitem.get("target.scheme",[""])[0],
+            linkitem.get("target.netloc",""),
+            linkitem.get("target.path",""),
+            linkitem.get("target.params",""),
+            linkitem.get("target.query",""),
+            linkitem.get("target.fragment",[""])[0]
+        ])
+
+    @classmethod
+    def fromlinkitem(cls, linkitem):
         try:
-            fields = cls.get_fields_by_response(response)
-            fields["linkitem"] = linkitem
-            content = response.text
-            dom = fromstring(content)
-            dom.make_links_absolute(response.url)
-            return cls(response.url, dom, **fields)
+            url = cls.linktarget(linkitem)
+            response = cls.get(url)
+            return cls.fromresponse(response, linkitem)
+        except Exception as e:
+            #logger.exception(e)
+            return None
+
+    @classmethod
+    async def async_fromlinkitem(cls, session, linkitem):
+        try:
+            url = cls.linktarget(linkitem)
+            response = await cls.async_get(session, url)
+            return await cls.async_fromresponse(response, linkitem)
         except Exception as e:
             #logger.exception(e)
             return None
@@ -262,4 +302,3 @@ class Page():
         self._now = now
 
     now = property(getnow, setnow)
-

@@ -3,8 +3,36 @@ from jaypage.page import Page
 from urllib.parse import urlparse
 import datetime
 import collections
+import asyncio
+
+class AsyncYcomResponse:
+    url = "http://ycombinator.com"
+    async def text(self):
+        return " ".join([
+            "<html><body><tr class=\"athing\">Hello,",
+            "<a class=\"storylink\" href=\"http://example.com\">",
+            "Mulligan</a><span class=\"date\">First Date</span>",
+            "<span class=\"date\">Second Date</span></tr></body></html>",
+        ])
+
+class YcomResponse:
+    url = "http://ycombinator.com"
+    text = " ".join([
+        "<html><body><tr class=\"athing\">Hello,",
+        "<a class=\"storylink\" href=\"http://example.com\">",
+        "Mulligan</a><span class=\"date\">First Date</span>",
+        "<span class=\"date\">Second Date</span></tr></body></html>",
+    ])
 
 class Page(Page):
+    @classmethod
+    def get(cls, *args, **kwargs):
+        return YcomResponse()
+
+    @classmethod
+    async def async_get(cls, session, *args, **kwargs):
+        return AsyncYcomResponse()
+
     @classmethod
     def get_fields_by_response(cls, response):
         try:
@@ -20,14 +48,6 @@ class Page(Page):
             }
 
 
-class YcomResponse:
-    url = "http://ycombinator.com"
-    text = " ".join([
-        "<html><body><tr class=\"athing\">Hello,",
-        "<a class=\"storylink\" href=\"http://example.com\">",
-        "Mulligan</a><span class=\"date\">First Date</span>",
-        "<span class=\"date\">Second Date</span></tr></body></html>",
-    ])
 
 class Tests(unittest.TestCase):
     maxDiff = None
@@ -58,6 +78,30 @@ class Tests(unittest.TestCase):
             'linkitem': {},
         })
 
+    def test_page_from_ycom_linkitem(self):
+        p = Page.fromlinkitem({
+            "target.scheme":["http"],
+            "target.netloc":"ycombinator.com",
+            "target.path":"",
+            "target.params":"",
+            "target.query":"",
+            "target.fragment":[""],
+        })
+        self.assertEqual(p.fields["loc_source"], urlparse("http://ycombinator.com"))
+
+    def test_page_from_ycom_linkitem_async(self):
+        p = asyncio.get_event_loop().run_until_complete(Page.async_fromlinkitem(
+            session = None,
+            linkitem = {
+                "target.scheme":["http"],
+                "target.netloc":"ycombinator.com",
+                "target.path":"",
+                "target.params":"",
+                "target.query":"",
+                "target.fragment":[""],
+            })
+        )
+        self.assertEqual(p.fields["loc_source"], urlparse("http://ycombinator.com"))
 
     def test_page_pageitem(self):
         p = Page.fromresponse(YcomResponse())
