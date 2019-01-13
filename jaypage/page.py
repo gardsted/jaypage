@@ -12,19 +12,13 @@ import uuid
 logger = logging.getLogger("page")
 
 class Page():
-    linkfields = {
-        "target":[""],
-        "text":[""],
-        "title":[""],
-        "date":[""],
-        "author":[""],
-        "img":[""],
-    }
-
     def __init__(self, url, dom, **fields):
+        """ fields are rules for extraction
+        but also 
+        linkitem - transferring to page what was registered about the link
+        """
         self.dom = dom
         self._text = None
-        self._id = None
         self._pageitem = None
         self._linkitems = None
         self._now = None
@@ -36,16 +30,15 @@ class Page():
             "text_keep" : ["xpath://body"],
             "target_weight" : 1,
             "source_weight" : 1,
+            "linkitem":{},
         }
         self.fields.update(fields)
-        self.linkfields = copy.copy(self.__class__.linkfields)
+        self._id = self.fields.get("linkitem",{}).get("id.target",None)
 
     @classmethod
-    async def fromaiohttpresponse(cls, response, target_id=None):
+    async def async_fromresponse(cls, response):
         try:
             fields = cls.get_fields_by_response(response)
-            if target_id:
-                fields["target_id"] = target_id
             content = await response.text()
             dom = fromstring(content, base_url = str(response.url))
             dom.make_links_absolute()
@@ -55,11 +48,9 @@ class Page():
             return None
 
     @classmethod
-    def fromresponse(cls, response, target_id=None):
+    def fromresponse(cls, response):
         try:
             fields = cls.get_fields_by_response(response)
-            if target_id:
-                fields["target_id"] = target_id
             content = response.text
             dom = fromstring(content)
             dom.make_links_absolute(response.url)
@@ -186,7 +177,6 @@ class Page():
             "id.source": id_source,
             "source": self.fields["loc_source"]._asdict(),
             "text": self.text,
-            "structure": self.fall(),
             "when.date": self.now.date(),
             "when.retrieved": self.now,
             "weight.source": self.fields["source_weight"]
@@ -227,8 +217,7 @@ class Page():
                     branches = Page.extract(dom, keep_xpath=[_pattern])
                 for branch in branches:
                     item = copy.copy(self._pageitem)
-                    [item.pop(x,None) for x in ["text", "structure"]]
-                    item.update(self.linkfields)
+                    [item.pop(x,None) for x in ["text"]]
                     for field, pattern in fields.items():
                         _type, _pattern = pattern.split(":")
                         parts = _pattern.split("\\")

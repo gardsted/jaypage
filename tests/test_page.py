@@ -45,7 +45,8 @@ class Tests(unittest.TestCase):
             'source_weight': 1,
             'target_weight': 1,
             'text_keep': ['xpath://body'],
-            'text_prune': ['xpath://style', 'xpath://script', 'xpath://comment()', 'css:script']
+            'text_prune': ['xpath://style', 'xpath://script', 'xpath://comment()', 'css:script'],
+            'linkitem': {}
         })
 
     def test_page_from_ycom_response(self):
@@ -57,7 +58,8 @@ class Tests(unittest.TestCase):
             'source_weight': 42,
             'target_weight': 42,
             'text_keep': ['css:tr.athing'],
-            'text_prune': ['xpath://style', 'xpath://script', 'xpath://comment()', 'css:script']
+            'text_prune': ['xpath://style', 'xpath://script', 'xpath://comment()', 'css:script'],
+            'linkitem': {},
         })
 
 
@@ -75,7 +77,6 @@ class Tests(unittest.TestCase):
                 ('params', ''),
                 ('query', ''),
                 ('fragment', '')]),
-            'structure': 'body tr a span span',
             'text': ['Hello, Mulligan First Date Second Date'],
             'weight.source': 42,
             'when.date': datetime.date(2019, 1, 1),
@@ -108,8 +109,6 @@ class Tests(unittest.TestCase):
                 ('fragment', '')]),
             'weight.target': 42,
             'weight.source': 42,
-            'author': [''],
-            'text': [''],
             'title': ['Mulligan'],
             'when.date': datetime.date(2019, 1, 1),
             'when.retrieved': datetime.datetime(2019, 1, 1, 10, 0)}
