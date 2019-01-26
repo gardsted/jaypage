@@ -18,13 +18,15 @@ class AsyncYcomResponse:
 class YcomResponse:
     url = "http://ycombinator.com"
     text = " ".join([
-        "<html><body><tr class=\"athing\">Hello,",
+        "<html><head><title>Hello there</title></head><body><tr class=\"athing\">Hello,",
         "<a class=\"storylink\" href=\"http://example.com\">",
         "Mulligan</a><span class=\"date\">First Date</span>",
         "<span class=\"date\">Second Date</span></tr></body></html>",
     ])
 
 class Page(Page):
+    jobid = "Testjob"
+
     @classmethod
     def get(cls, *args, **kwargs):
         return YcomResponse()
@@ -120,7 +122,11 @@ class Tests(unittest.TestCase):
             'text': ['Hello, Mulligan First Date Second Date'],
             'weight.source': 42,
             'when.date': datetime.date(2019, 1, 1),
-            'when.retrieved': datetime.datetime(2019, 1, 1, 10, 0)
+            'when.retrieved': datetime.datetime(2019, 1, 1, 10, 0),
+            'fb.title': ["Hello there"],
+            'fb.description':['Hello, Mulligan First Date Second Date'],
+            'fb.url': "http://ycombinator.com",
+            'id.job':'Testjob',
         }, p.pageitem)
 
     def test_page_linkitems(self):
@@ -132,6 +138,7 @@ class Tests(unittest.TestCase):
             'id.source.date': '43f3e1132ca600be134f52eff3d7865d53646d28',
             'id.source.target.date': '4c7a034e3d5a99eb549924687315c6f9b06deb16',
             'id.target': '47014b13456d9554edd0cf4567c07059ea1c7837',
+            'id.job':'Testjob',
             'pubdate': ['First Date', 'Second Date'],
             'source': collections.OrderedDict([
                 ('scheme', 'http'),

@@ -12,6 +12,8 @@ import uuid
 logger = logging.getLogger("page")
 
 class Page():
+    jobid = hashlib.sha1(str(datetime.datetime.now()).encode("utf-8")).hexdigest()
+
     def __init__(self, url, dom, **fields):
         """ fields are rules for extraction
         but also :
@@ -149,12 +151,13 @@ class Page():
             prune_xpath = [x.split(":")[1] for x in self.fields["text_prune"] if x.startswith("xpath")],
             prune_css = [x.split(":")[1] for x in self.fields["text_prune"] if x.startswith("css")],
         )
+
+        textparts = collections.OrderedDict()
         branches = Page.extract(
             dom,
             keep_xpath = [x.split(":")[1] for x in self.fields["text_keep"] if x.startswith("xpath")],
             keep_css = [x.split(":")[1] for x in self.fields["text_keep"] if x.startswith("css")],
         )
-        textparts = collections.OrderedDict()
         texts = []
         [texts.append(Page.domtree2text_fragments(g)) for g in branches]
         [textparts.setdefault(t,1) for t in texts if len(t)]
@@ -194,7 +197,15 @@ class Page():
         if extra_source_id and not extra_source_id in id_source:
             id_source.append(extra_source_id)
 
-        self._head = {}
+
+        title, _title = "", self.dom.cssselect("head title")
+        if len(_title):
+            title = [t.text.strip() for t in _title]
+        self._head = {
+            "fb.title": title,
+            "fb.description": self.text[0:200],
+            "fb.url": urlunparse(self.fields["loc_source"]),
+        }
 
         for i in self.dom.cssselect("meta"):
             a = i.attrib
@@ -205,9 +216,9 @@ class Page():
                 if "name" in a and ":" in a["name"]:
                     name = ".".join(a["name"].split(":"))
                     self._head.setdefault(name,[]).append(a["content"])
-
         return {
             "id": self.id,
+            "id.job" : self.jobid,
             "id.source.date": self.id,
             "id.source": id_source,
             "source": self.fields["loc_source"]._asdict(),
@@ -271,7 +282,15 @@ class Page():
                             item[field] = [x.attrib.get(_attrib) for x in _branches]
                         elif len(_branches):
                             item[field] = [Page.domtree2text_fragments(b) for b in _branches]
-                    item["target"] = urlparse(item["target"][0])._asdict()
+                    target = item.get("target")
+                    if isinstance(target, list):
+                        target = target[0]
+                    if target == None:
+                        target = ""
+                    if not isinstance(target, str):
+                        target = target.decode("ascii", "ignore")
+                    item["target"] = urlparse(target)._asdict()
+                    item["id.job"] = self.jobid
                     item["id"] = item["id.source.target.date"] = Page.signature(
                         (item["source"], item["target"], item["when.date"])
                     )
