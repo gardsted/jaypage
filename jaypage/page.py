@@ -117,8 +117,11 @@ class Page():
     @classmethod
     def extract(cls, dom, keep_xpath=[], keep_css=[]):
         branches = []
-        [branches.extend(dom.xpath(x)) for x in keep_xpath]
-        [branches.extend(dom.cssselect(c)) for c in keep_css]
+        try:
+            [branches.extend(dom.xpath(x)) for x in keep_xpath]
+            [branches.extend(dom.cssselect(c)) for c in keep_css]
+        except:
+            logger.exception("css: %r, xpath: %r" %(keep_css, keep_xpath))
         return branches
 
     @classmethod
@@ -203,7 +206,7 @@ class Page():
             title = [t.text.strip() for t in _title]
         self._head = {
             "fb.title": title,
-            "fb.description": self.text[0:200],
+            "fb.description": " ".join(self.text[0:1])[:200],
             "fb.url": urlunparse(self.fields["loc_source"]),
         }
 
