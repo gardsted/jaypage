@@ -31,7 +31,7 @@ class Page():
             who.author - who wrote it
             who.about - who is mentioned
             where.about - what countries/cities are mentioned
-            what.about - what description/subjects/tags are covered
+            what.about - what subjects/tags are covered
         """
         self.dom = dom
         self._text = None
